@@ -1,0 +1,4 @@
+{
+  "node": "dist/nodes/SecloreProtect/SecloreProtect.node.js",
+  "credentials": "dist/credentials/SecloreProtectApi.credentials.js"
+}
