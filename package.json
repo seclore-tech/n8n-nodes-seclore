@@ -1,6 +1,6 @@
 {
 	"name": "@seclore/n8n-nodes-seclore",
-	"version": "1.0.5",
+	"version": "1.0.6",
 	"description": "n8n community node for Seclore Protect - secure file protection using DRM technology",
 	"license": "MIT",
 	"homepage": "",
@@ -13,7 +13,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/seclore-tech/n8n-nodes-seclore"
+		"url": "git+https://github.com/seclore-tech/n8n-nodes-seclore.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
