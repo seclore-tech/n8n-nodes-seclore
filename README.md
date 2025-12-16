@@ -29,7 +29,6 @@ This node supports the following operations with Seclore DRM Server:
 - **Required Parameters**:
   - **HotFolder ID**: The ID of the HotFolder configuration to use for protection
   - **Input Binary Property**: Name of the binary property containing the file to protect (default: 'data')
-  - **Retry Count**: Number of retry attempts for failed requests (default: 3)
 - **Output**: Protected file with DRM protection applied according to the specified policy
 
 
@@ -38,7 +37,6 @@ This node supports the following operations with Seclore DRM Server:
 - **Description**: Removes DRM protection from Seclore-protected files
 - **Required Parameters**:
   - **Input Binary Property**: Name of the binary property containing the protected file (default: 'data')
-  - **Retry Count**: Number of retry attempts for failed requests (default: 3)
 - **Output**: Unprotected original file content
 
 
@@ -85,7 +83,6 @@ To use this node, you need to authenticate with your Seclore DRM Server. The fol
    - **Operation**: Select "Protect using Policy"
    - **HotFolder ID**: Enter your HotFolder configuration ID
    - **Input Binary Property**: Specify the binary property name (default: 'data')
-   - **Retry Count**: Set retry attempts (default: 3)
 4. Configure your Seclore API credentials
 5. The node will return the protected file with DRM encryption applied according to your policy
 
@@ -96,7 +93,6 @@ To use this node, you need to authenticate with your Seclore DRM Server. The fol
    - **Resource**: Select "DRM Unprotection"
    - **Operation**: Select "Unprotect"
    - **Input Binary Property**: Specify the binary property containing the protected file (default: 'data')
-   - **Retry Count**: Set retry attempts (default: 3)
 4. Configure your Seclore API credentials
 5. The node will return the original unprotected file content
 
@@ -107,7 +103,6 @@ To use this node, you need to authenticate with your Seclore DRM Server. The fol
 - Protected files can only be unprotected by authorized users with proper credentials
 - HotFolder ID must be configured in your Seclore Policy Server before using protection operations
 - The node supports binary data processing for both input and output files
-- Retry mechanism is built-in for handling temporary network or server issues
 
 ### Error Handling
 The node includes comprehensive error handling and logging:

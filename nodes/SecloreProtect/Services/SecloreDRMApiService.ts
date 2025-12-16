@@ -1,4 +1,4 @@
-import { IExecuteFunctions, IHttpRequestOptions, NodeApiError, LoggerProxy as Logger } from 'n8n-workflow';
+import { IExecuteFunctions, IHttpRequestOptions, NodeApiError } from 'n8n-workflow';
 import { IErrorResponse } from './Interfaces/ErrorInterfaces';
 import { IFileUploadResponse, IFileDownloadResponse, IFileDeleteResponse } from './Interfaces/FileStorageInterfaces';
 import { ILoginRequest, ILoginResponse, IRefreshTokenRequest } from './Interfaces/LoginInterfaces';
@@ -68,9 +68,7 @@ export class SecloreDRMApiService {
 		tenantSecret: string,
 		correlationId?: string,
 	): Promise<ILoginResponse> {
-		const who = "SecloreDRMApiService::login:: ";
 		try {
-			Logger.debug(who + 'Attempting login', { tenantId, correlationId });
 			
 			const requestBody: ILoginRequest = {
 				tenantId,
@@ -94,9 +92,7 @@ export class SecloreDRMApiService {
 				json: true,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'Login successful', { tenantId, correlationId });
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const loginResponse: ILoginResponse = {
 				...(response.body as ILoginResponse),
@@ -105,7 +101,6 @@ export class SecloreDRMApiService {
 			
 			return loginResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'Login failed', { error, tenantId, correlationId });
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -120,9 +115,7 @@ export class SecloreDRMApiService {
 	 * @throws Error on authentication failure or server error
 	 */
 	async refreshToken(refreshToken: string, correlationId?: string): Promise<ILoginResponse> {
-		const who = "SecloreDRMApiService::refreshToken:: ";
 		try {
-			Logger.debug(who + 'Attempting token refresh', { correlationId });
 			
 			const requestBody: IRefreshTokenRequest = {
 				refreshToken,
@@ -145,9 +138,7 @@ export class SecloreDRMApiService {
 				json: true,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'Token refresh successful', { correlationId });
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const refreshResponse: ILoginResponse = {
 				...(response.body as ILoginResponse),
@@ -156,7 +147,6 @@ export class SecloreDRMApiService {
 			
 			return refreshResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'Token refresh failed', { error, correlationId });
 			this.handleHttpError(error as NodeApiError, { 401: 'Unauthorized' });
 		}
 	}
@@ -165,27 +155,18 @@ export class SecloreDRMApiService {
 	 * Protect file using external identifier of protected File and HotFolder with PS configured against the logged in Tenant in application.
 	 *
 	 * @param protectRequest - The protection request details
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IProtectWithExternalRefIdResponse> - File storage ID and Seclore file ID
 	 * @throws Error on bad request, authentication failure or server error
 	 */
 	async protectWithExternalRefId(
 		protectRequest: IProtectWithExternalRefIdRequest,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IProtectWithExternalRefIdResponse> {
-		const who = "SecloreDRMApiService::protectWithExternalRefId:: ";
 		try {
-			Logger.debug(who + 'Protecting file with external ref ID', { 
-				fileStorageId: protectRequest.fileStorageId,
-				hotfolderExternalReferenceId: protectRequest.hotfolderExternalReference.externalReferenceId,
-				correlationId 
-			});
 			
 			const headers: { [key: string]: string } = {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${accessToken}`,
 			};
 
 			// Add correlation ID if provided
@@ -201,13 +182,7 @@ export class SecloreDRMApiService {
 				json: true,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'Protection with external ref ID successful', { 
-				fileStorageId: protectRequest.fileStorageId,
-				secloreFileId: (response.body as IProtectWithExternalRefIdResponse).secloreFileId,
-				correlationId 
-			});
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const protectResponse: IProtectWithExternalRefIdResponse = {
 				...(response.body as IProtectWithExternalRefIdResponse),
@@ -216,11 +191,6 @@ export class SecloreDRMApiService {
 			
 			return protectResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'Protection with external ref ID failed', { 
-				error, 
-				fileStorageId: protectRequest.fileStorageId, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -229,27 +199,18 @@ export class SecloreDRMApiService {
 	 * Protects file using File ID of already protected file with PS configured against the logged in Tenant in application.
 	 *
 	 * @param protectRequest - The protection request details with existing protected file ID
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IProtectWithFileIdResponse> - File storage ID and Seclore file ID
 	 * @throws Error on bad request, authentication failure or server error
 	 */
 	async protectWithFileId(
 		protectRequest: IProtectWithFileIdRequest,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IProtectWithFileIdResponse> {
-		const who = "SecloreDRMApiService::protectWithFileId:: ";
 		try {
-			Logger.debug(who + 'Protecting file with file ID', { 
-				existingProtectedFileId: protectRequest.existingProtectedFileId,
-				fileStorageId: protectRequest.fileStorageId,
-				correlationId 
-			});
 			
 			const headers: { [key: string]: string } = {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${accessToken}`,
 			};
 
 			// Add correlation ID if provided
@@ -265,13 +226,7 @@ export class SecloreDRMApiService {
 				json: true,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'Protection with file ID successful', { 
-				existingProtectedFileId: protectRequest.existingProtectedFileId,
-				secloreFileId: (response.body as IProtectWithFileIdResponse).secloreFileId,
-				correlationId 
-			});
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const protectResponse: IProtectWithFileIdResponse = {
 				...(response.body as IProtectWithFileIdResponse),
@@ -280,11 +235,6 @@ export class SecloreDRMApiService {
 			
 			return protectResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'Protection with file ID failed', { 
-				error, 
-				existingProtectedFileId: protectRequest.existingProtectedFileId, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -293,27 +243,18 @@ export class SecloreDRMApiService {
 	 * Protects file using HotFolder ID with PS configured against the logged in Tenant in application.
 	 *
 	 * @param protectRequest - The protection request details with hotfolder ID
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IProtectWithHotFolderResponse> - File storage ID and Seclore file ID
 	 * @throws Error on bad request, authentication failure or server error
 	 */
 	async protectWithHotFolder(
 		protectRequest: IProtectWithHotFolderRequest,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IProtectWithHotFolderResponse> {
-		const who = "SecloreDRMApiService::protectWithHotFolder:: ";
 		try {
-			Logger.debug(who + 'Protecting file with hot folder', { 
-				hotfolderId: protectRequest.hotfolderId,
-				fileStorageId: protectRequest.fileStorageId,
-				correlationId 
-			});
 			
 			const headers: { [key: string]: string } = {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${accessToken}`,
+				'Content-Type': 'application/json'
 			};
 
 			// Add correlation ID if provided
@@ -329,13 +270,7 @@ export class SecloreDRMApiService {
 				json: true,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'Protection with hot folder successful', { 
-				hotfolderId: protectRequest.hotfolderId,
-				secloreFileId: (response.body as IProtectWithHotFolderResponse).secloreFileId,
-				correlationId 
-			});
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const protectResponse: IProtectWithHotFolderResponse = {
 				...(response.body as IProtectWithHotFolderResponse),
@@ -344,12 +279,6 @@ export class SecloreDRMApiService {
 			
 			return protectResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'Protection with hot folder failed', { 
-				error, 
-				hotfolderId: protectRequest.hotfolderId, 
-				fileStorageId: protectRequest.fileStorageId, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -358,26 +287,18 @@ export class SecloreDRMApiService {
 	 * Unprotects file with PS configured against the logged in Tenant in application.
 	 *
 	 * @param unprotectRequest - The unprotect request details with file storage ID
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IUnprotectResponse> - File storage ID of unprotected file
 	 * @throws Error on bad request, authentication failure or server error
 	 */
 	async unprotect(
 		unprotectRequest: IUnprotectRequest,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IUnprotectResponse> {
-		const who = "SecloreDRMApiService::unprotect:: ";
 		try {
-			Logger.debug(who + 'Unprotecting file', { 
-				fileStorageId: unprotectRequest.fileStorageId,
-				correlationId 
-			});
 			
 			const headers: { [key: string]: string } = {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${accessToken}`,
 			};
 
 			// Add correlation ID if provided
@@ -393,13 +314,7 @@ export class SecloreDRMApiService {
 				json: true,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'Unprotection successful', { 
-				originalFileStorageId: unprotectRequest.fileStorageId,
-				unprotectedFileStorageId: (response.body as IUnprotectResponse).fileStorageId,
-				correlationId 
-			});
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const unprotectResponse: IUnprotectResponse = {
 				...(response.body as IUnprotectResponse),
@@ -408,11 +323,6 @@ export class SecloreDRMApiService {
 			
 			return unprotectResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'Unprotection failed', { 
-				error, 
-				fileStorageId: unprotectRequest.fileStorageId, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -422,7 +332,6 @@ export class SecloreDRMApiService {
 	 *
 	 * @param fileBuffer - The file buffer data
 	 * @param fileName - The name of the file
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IFileUploadResponse> - File storage details including file ID and metadata
 	 * @throws Error on authentication failure, payload too large, or server error
@@ -430,20 +339,11 @@ export class SecloreDRMApiService {
 	async uploadFile(
 		fileBuffer: Uint8Array,
 		fileName: string,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IFileUploadResponse> {
-		const who = "SecloreDRMApiService::uploadFile:: ";
 		try {
-			Logger.debug(who + 'Uploading file', { 
-				fileName,
-				fileSize: fileBuffer.length,
-				correlationId 
-			});
 			
-			const headers: { [key: string]: string } = {
-				Authorization: `Bearer ${accessToken}`,
-			};
+			const headers: { [key: string]: string } = {};
 
 			// Add correlation ID if provided
 			if (correlationId) {
@@ -462,13 +362,7 @@ export class SecloreDRMApiService {
 				body: formData,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, fileName, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'File upload successful', { 
-				fileName,
-				fileStorageId: (response.body as IFileUploadResponse).fileStorageId,
-				correlationId 
-			});
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const uploadResponse: IFileUploadResponse = {
 				...(response.body as IFileUploadResponse),
@@ -477,12 +371,6 @@ export class SecloreDRMApiService {
 			
 			return uploadResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'File upload failed', { 
-				error, 
-				fileName, 
-				fileSize: fileBuffer.length, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -492,26 +380,17 @@ export class SecloreDRMApiService {
 	 * NOTE: Files whose fileStorageId has 'DL_' prefix will be deleted from the file storage after download.
 	 *
 	 * @param fileStorageId - Storage ID of the file to be retrieved
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IFileDownloadResponse> - The downloaded file data with headers
 	 * @throws Error on authentication failure or server error
 	 */
 	async downloadFile(
 		fileStorageId: string,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IFileDownloadResponse> {
-		const who = "SecloreDRMApiService::downloadFile:: ";
 		try {
-			Logger.debug(who + 'Downloading file', { 
-				fileStorageId,
-				correlationId 
-			});
 			
-			const headers: { [key: string]: string } = {
-				Authorization: `Bearer ${accessToken}`,
-			};
+			const headers: { [key: string]: string } = {};
 
 			// Add correlation ID if provided
 			if (correlationId) {
@@ -525,14 +404,8 @@ export class SecloreDRMApiService {
 				encoding: 'arraybuffer',
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, fileStorageId, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			const fileData = new Uint8Array(response.body as ArrayBuffer);
-			Logger.debug(who + 'File download successful', { 
-				fileStorageId,
-				fileSize: fileData.length,
-				correlationId 
-			});
 			
 			const downloadResponse: IFileDownloadResponse = {
 				data: fileData,
@@ -541,11 +414,6 @@ export class SecloreDRMApiService {
 			
 			return downloadResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'File download failed', { 
-				error, 
-				fileStorageId, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}
@@ -554,26 +422,17 @@ export class SecloreDRMApiService {
 	 * Deletes a file with fileStorageId from file storage of currently logged in Tenant.
 	 *
 	 * @param fileStorageId - Storage ID of the file to be deleted
-	 * @param accessToken - JWT access token for authorization
 	 * @param correlationId - Optional request ID for logging purpose
 	 * @returns Promise<IFileDeleteResponse> - Response headers on successful deletion
 	 * @throws Error on authentication failure or server error
 	 */
 	async deleteFile(
 		fileStorageId: string,
-		accessToken: string,
 		correlationId?: string,
 	): Promise<IFileDeleteResponse> {
-		const who = "SecloreDRMApiService::deleteFile:: ";
 		try {
-			Logger.debug(who + 'Deleting file', { 
-				fileStorageId,
-				correlationId 
-			});
 			
-			const headers: { [key: string]: string } = {
-				Authorization: `Bearer ${accessToken}`,
-			};
+			const headers: { [key: string]: string } = {};
 
 			// Add correlation ID if provided
 			if (correlationId) {
@@ -586,12 +445,7 @@ export class SecloreDRMApiService {
 				headers,
 			};
 
-			Logger.debug(who + 'Making HTTP request', { url: options.url, method: options.method, fileStorageId, correlationId });
-			const response = await this.context.helpers.httpRequest({ ...options, returnFullResponse: true });
-			Logger.debug(who + 'File deletion successful', { 
-				fileStorageId,
-				correlationId 
-			});
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
 			
 			const deleteResponse: IFileDeleteResponse = {
 				headers: response.headers as { [key: string]: string }
@@ -599,11 +453,6 @@ export class SecloreDRMApiService {
 			
 			return deleteResponse;
 		} catch (error: unknown) {
-			Logger.error(who + 'File deletion failed', { 
-				error, 
-				fileStorageId, 
-				correlationId 
-			});
 			this.handleHttpError(error as NodeApiError);
 		}
 	}

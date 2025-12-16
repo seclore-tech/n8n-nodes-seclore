@@ -1,4 +1,5 @@
-import { ICredentialTestRequest, ICredentialType, INodeProperties, Icon } from 'n8n-workflow';
+import { IAuthenticateGeneric, ICredentialDataDecryptedObject, ICredentialTestRequest, ICredentialType, IHttpRequestHelper, INodeProperties, Icon } from 'n8n-workflow';
+import { ILoginResponse } from '../nodes/SecloreProtect/Services/Interfaces/LoginInterfaces';
 
 export class SecloreProtectApi implements ICredentialType {
 	name = 'secloreProtectApi';
@@ -6,6 +7,16 @@ export class SecloreProtectApi implements ICredentialType {
 	documentationUrl = 'https://docs.seclore.com/';
 	icon: Icon = 'file:../icons/seclore.svg';
 	properties: INodeProperties[] = [
+		{
+			displayName: 'Access Token',
+			name: 'accessToken',
+			type: 'hidden',
+			typeOptions: {
+				expirable: true,
+				password: true,
+			},
+			default: '',
+		},
 		{
 			displayName: 'Base URL',
 			name: 'baseUrl',
@@ -36,6 +47,35 @@ export class SecloreProtectApi implements ICredentialType {
 			required: true,
 		},
 	];
+
+	// method will only be called if "accessToken" (the expirable property)
+	// is empty or is expired
+	async preAuthentication(this: IHttpRequestHelper, credentials: ICredentialDataDecryptedObject) {
+		const tenantId = credentials.tenantId as string;
+		const tenantSecret = credentials.tenantSecret as string;
+		const baseUrl = credentials.baseUrl as string;
+
+		const authResponse = await this.helpers.httpRequest({
+			method: 'POST',
+			url: `${baseUrl}/seclore/drm/1.0/auth/login`,
+			body: {
+				tenantId,
+				tenantSecret,
+			},
+		}) as ILoginResponse;
+
+		return { accessToken: authResponse.accessToken };
+		
+	}
+
+	authenticate: IAuthenticateGeneric = {
+		type: 'generic',
+		properties: {
+			headers: {
+				'Authorization': '=Bearer {{$credentials.accessToken}}',
+			},
+		},
+	};
 
 	// Optional: Add credential test
 	test: ICredentialTestRequest = {

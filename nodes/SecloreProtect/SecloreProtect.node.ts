@@ -1,6 +1,7 @@
 import {
 	INodeType,
 	INodeTypeDescription,
+	NodeConnectionTypes,
 } from 'n8n-workflow';
 
 import { protectWithHotFolder } from './operations/protectWithHotFolder';
@@ -19,8 +20,8 @@ export class SecloreProtect implements INodeType {
 		defaults: {
 			name: 'Seclore',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
 			{
 				name: 'secloreProtectApi',
@@ -116,19 +117,7 @@ export class SecloreProtect implements INodeType {
 					},
 				},
 			},
-			{
-				displayName: 'Retry Count',
-				name: 'retryCount',
-				type: 'number',
-				default: 3,
-				description: 'Number of retry attempts for failed requests',
-				displayOptions: {
-					show: {
-						resource: ['drmProtection'],
-						operation: ['protectWithHotFolder'],
-					},
-				},
-			},
+			
 			// Unprotect operation parameters
 			{
 				displayName: 'Input Binary Property',
@@ -137,19 +126,6 @@ export class SecloreProtect implements INodeType {
 				default: 'data',
 				required: true,
 				description: 'Name of the binary property that contains the protected file to unprotect',
-				displayOptions: {
-					show: {
-						resource: ['drmUnprotection'],
-						operation: ['unprotect'],
-					},
-				},
-			},
-			{
-				displayName: 'Retry Count',
-				name: 'retryCount',
-				type: 'number',
-				default: 3,
-				description: 'Number of retry attempts for failed requests',
 				displayOptions: {
 					show: {
 						resource: ['drmUnprotection'],

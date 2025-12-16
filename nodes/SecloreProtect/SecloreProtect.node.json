@@ -1,4 +1,11 @@
 {
-  "node": "dist/nodes/SecloreProtect/SecloreProtect.node.js",
-  "credentials": "dist/credentials/SecloreProtectApi.credentials.js"
+	"node": "n8n-nodes-base.secloreProtect",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Utility", "Data & Storage", "Miscellaneous"],
+	"resources": {
+		"credentialDocumentation": [{ "url": "https://docs.seclore.com/" }],
+		"primaryDocumentation": [{ "url": "https://docs.seclore.com/" }]
+	},
+	"alias": ["drm", "protect", "security"]
 }
