@@ -1,4 +1,15 @@
 import { IExecuteFunctions } from 'n8n-workflow';
+import {
+	IClassifyRequest,
+	IClassifyResponse,
+	IDeclassifyRequest,
+	IDeclassifyResponse,
+	IGetFileClassificationResponse,
+	IGetLabelsRequest,
+	IGetLabelsResponse,
+	IReclassifyRequest,
+	IReclassifyResponse,
+} from './Interfaces/ClassifyInterfaces';
 import { IFileDownloadResponse, IFileUploadResponse } from './Interfaces/FileStorageInterfaces';
 import {
 	IProtectWithExternalRefIdRequest,
@@ -63,6 +74,61 @@ export class SecloreDRMFileService {
 		correlationId?: string,
 	): Promise<IUnprotectResponse> {
 		const result = await this.apiService.unprotect(unprotectRequest, correlationId);
+		return result;
+	}
+
+	/**
+	 * Classify file with automatic authentication
+	 */
+	async classify(
+		classifyRequest: IClassifyRequest,
+		correlationId?: string,
+	): Promise<IClassifyResponse> {
+		const result = await this.apiService.classify(classifyRequest, correlationId);
+		return result;
+	}
+
+	/**
+	 * Reclassify file with automatic authentication
+	 */
+	async reclassify(
+		reclassifyRequest: IReclassifyRequest,
+		correlationId?: string,
+	): Promise<IReclassifyResponse> {
+		const result = await this.apiService.reclassify(reclassifyRequest, correlationId);
+		return result;
+	}
+
+	/**
+	 * Declassify file with automatic authentication
+	 */
+	async declassify(
+		declassifyRequest: IDeclassifyRequest,
+		correlationId?: string,
+	): Promise<IDeclassifyResponse> {
+		const result = await this.apiService.declassify(declassifyRequest, correlationId);
+		return result;
+	}
+
+	/**
+	 * Get the current classification of a file with automatic authentication
+	 */
+	async getFileClassification(
+		fileStorageId: string,
+		correlationId?: string,
+	): Promise<IGetFileClassificationResponse> {
+		const result = await this.apiService.getFileClassification(fileStorageId, correlationId);
+		return result;
+	}
+
+	/**
+	 * Get all classification labels with automatic authentication
+	 */
+	async getLabels(
+		getLabelsRequest: IGetLabelsRequest,
+		correlationId?: string,
+	): Promise<IGetLabelsResponse> {
+		const result = await this.apiService.getLabels(getLabelsRequest, correlationId);
 		return result;
 	}
 

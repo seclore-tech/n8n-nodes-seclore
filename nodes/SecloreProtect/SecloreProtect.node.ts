@@ -4,7 +4,12 @@ import {
 	NodeConnectionTypes,
 } from 'n8n-workflow';
 
+import { classify } from './operations/classify';
+import { declassify } from './operations/declassify';
+import { getFileClassification } from './operations/getFileClassification';
+import { getLabels } from './operations/getLabels';
 import { protectWithHotFolder } from './operations/protectWithHotFolder';
+import { reclassify } from './operations/reclassify';
 import { unprotect } from './operations/unprotect';
 
 export class SecloreProtect implements INodeType {
@@ -35,6 +40,11 @@ export class SecloreProtect implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
+					{
+						name: 'DRM Classification',
+						value: 'drmClassification',
+						description: 'DRM file classification operations',
+					},
 					{
 						name: 'DRM Protection',
 						value: 'drmProtection',
@@ -89,6 +99,50 @@ export class SecloreProtect implements INodeType {
 				default: 'unprotect',
 			},
 			{
+				displayName: 'Operation',
+				name: 'operation',
+				type: 'options',
+				noDataExpression: true,
+				displayOptions: {
+					show: {
+						resource: ['drmClassification'],
+					},
+				},
+				options: [
+					{
+						name: 'Classify',
+						value: 'classify',
+						description: 'Apply a classification label to a file',
+						action: 'Classify file',
+					},
+					{
+						name: 'Declassify',
+						value: 'declassify',
+						description: 'Remove the classification label from a file',
+						action: 'Declassify file',
+					},
+					{
+						name: 'Get Classification Labels',
+						value: 'getLabels',
+						description: 'Retrieve all classification labels configured in the Policy Server',
+						action: 'Get classification labels',
+					},
+					{
+						name: 'Get File Classification',
+						value: 'getFileClassification',
+						description: 'Retrieve the current classification label on a file',
+						action: 'Get file classification',
+					},
+					{
+						name: 'Reclassify',
+						value: 'reclassify',
+						description: 'Update the classification label on an already-classified file',
+						action: 'Reclassify file',
+					},
+				],
+				default: 'classify',
+			},
+			{
 				displayName: 'HotFolder ID',
 				name: 'hotfolderId',
 				type: 'string',
@@ -133,10 +187,61 @@ export class SecloreProtect implements INodeType {
 					},
 				},
 			},
+
+			// Classification operation parameters
+			{
+				displayName: 'Label ID',
+				name: 'labelId',
+				type: 'string',
+				required: true,
+				default: '',
+				placeholder: '',
+				description: 'The ID of the classification label configured in the Policy Server',
+				displayOptions: {
+					show: {
+						resource: ['drmClassification'],
+						operation: ['classify', 'reclassify'],
+					},
+				},
+			},
+			{
+				displayName: 'Input Binary Property',
+				name: 'binaryPropertyName',
+				type: 'string',
+				default: 'data',
+				required: true,
+				description: 'Name of the binary property that contains the input file',
+				displayOptions: {
+					show: {
+						resource: ['drmClassification'],
+						operation: ['classify', 'declassify', 'getFileClassification', 'getLabels', 'reclassify'],
+					},
+				},
+			},
+			{
+				displayName: 'Force Label Refresh',
+				name: 'forceLabelRefresh',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to force a refresh of the label cache before the operation',
+				displayOptions: {
+					show: {
+						resource: ['drmClassification'],
+						operation: ['classify', 'declassify', 'getLabels', 'reclassify'],
+					},
+				},
+			},
 		],
 	};
 
 	customOperations = {
+		drmClassification: {
+			classify,
+			declassify,
+			getFileClassification,
+			getLabels,
+			reclassify,
+		},
 		drmProtection: {
 			protectWithHotFolder,
 		},

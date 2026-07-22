@@ -1,4 +1,15 @@
 import { IExecuteFunctions, IHttpRequestOptions, NodeApiError } from 'n8n-workflow';
+import {
+	IClassifyRequest,
+	IClassifyResponse,
+	IDeclassifyRequest,
+	IDeclassifyResponse,
+	IGetFileClassificationResponse,
+	IGetLabelsRequest,
+	IGetLabelsResponse,
+	IReclassifyRequest,
+	IReclassifyResponse,
+} from './Interfaces/ClassifyInterfaces';
 import { IErrorResponse } from './Interfaces/ErrorInterfaces';
 import { IFileUploadResponse, IFileDownloadResponse, IFileDeleteResponse } from './Interfaces/FileStorageInterfaces';
 import { ILoginRequest, ILoginResponse, IRefreshTokenRequest } from './Interfaces/LoginInterfaces';
@@ -324,6 +335,268 @@ export class SecloreDRMApiService {
 			return unprotectResponse;
 		} catch (error: unknown) {
 			this.handleHttpError(error as NodeApiError);
+		}
+	}
+
+	/**
+	 * Throws a detailed error for classification endpoints, surfacing the endpoint name,
+	 * HTTP status and the raw response body returned by the server.
+	 *
+	 * @param error - The error object from httpRequest
+	 * @param endpoint - The endpoint name to include in the error message
+	 */
+	private throwDetailedError(error: NodeApiError, endpoint: string): never {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const anyError = error as any;
+		const rawBody =
+			error.errorResponse ?? anyError?.cause?.response?.data ?? anyError?.context?.data;
+		let detail = '';
+		if (rawBody) {
+			try {
+				detail = typeof rawBody === 'string' ? rawBody : JSON.stringify(rawBody);
+			} catch {
+				// ignore serialization failure
+			}
+		}
+		if (!detail) {
+			detail =
+				(typeof error.description === 'string' && error.description) ||
+				error.message ||
+				'Unknown error';
+		}
+		throw new Error(`[${endpoint}] HTTP ${error.httpCode ?? 'error'}: ${detail}`);
+	}
+
+	/**
+	 * Applies a classification label to a file using a labelId configured in the Policy Server.
+	 *
+	 * @param classifyRequest - The classify request details with file storage ID and label ID
+	 * @param correlationId - Optional request ID for logging purpose
+	 * @returns Promise<IClassifyResponse> - File storage ID, label ID and label name of the classified file
+	 * @throws Error on bad request, authentication failure or server error
+	 */
+	async classify(
+		classifyRequest: IClassifyRequest,
+		correlationId?: string,
+	): Promise<IClassifyResponse> {
+		try {
+
+			const headers: { [key: string]: string } = {
+				'Content-Type': 'application/json',
+			};
+
+			// Add correlation ID if provided
+			if (correlationId) {
+				headers['X-SECLORE-CORRELATION-ID'] = correlationId;
+			}
+
+			const options: IHttpRequestOptions = {
+				method: 'POST',
+				url: `${this.baseUrl}/seclore/drm/1.0/classification/classify`,
+				headers,
+				body: classifyRequest,
+				json: true,
+			};
+
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
+
+			// Some server versions return the result wrapped in an array
+			const responseBody = Array.isArray(response.body) ? response.body[0] : response.body;
+
+			const classifyResponse: IClassifyResponse = {
+				...(responseBody as IClassifyResponse),
+				headers: response.headers as { [key: string]: string }
+			};
+
+			return classifyResponse;
+		} catch (error: unknown) {
+			this.throwDetailedError(error as NodeApiError, 'classification/classify');
+		}
+	}
+
+	/**
+	 * Updates the classification label on an already-classified file.
+	 *
+	 * @param reclassifyRequest - The reclassify request details with file storage ID and new label ID
+	 * @param correlationId - Optional request ID for logging purpose
+	 * @returns Promise<IReclassifyResponse> - File storage ID, current label and old label
+	 * @throws Error on bad request, authentication failure or server error
+	 */
+	async reclassify(
+		reclassifyRequest: IReclassifyRequest,
+		correlationId?: string,
+	): Promise<IReclassifyResponse> {
+		try {
+
+			const headers: { [key: string]: string } = {
+				'Content-Type': 'application/json',
+			};
+
+			// Add correlation ID if provided
+			if (correlationId) {
+				headers['X-SECLORE-CORRELATION-ID'] = correlationId;
+			}
+
+			const options: IHttpRequestOptions = {
+				method: 'POST',
+				url: `${this.baseUrl}/seclore/drm/1.0/classification/reclassify`,
+				headers,
+				body: reclassifyRequest,
+				json: true,
+			};
+
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
+
+			// Some server versions return the result wrapped in an array
+			const responseBody = Array.isArray(response.body) ? response.body[0] : response.body;
+
+			const reclassifyResponse: IReclassifyResponse = {
+				...(responseBody as IReclassifyResponse),
+				headers: response.headers as { [key: string]: string }
+			};
+
+			return reclassifyResponse;
+		} catch (error: unknown) {
+			this.throwDetailedError(error as NodeApiError, 'classification/reclassify');
+		}
+	}
+
+	/**
+	 * Removes the classification label from a file. DRM protection is unaffected —
+	 * only the label is removed.
+	 *
+	 * @param declassifyRequest - The declassify request details with file storage ID
+	 * @param correlationId - Optional request ID for logging purpose
+	 * @returns Promise<IDeclassifyResponse> - File storage ID with null label ID and label name
+	 * @throws Error on bad request, authentication failure or server error
+	 */
+	async declassify(
+		declassifyRequest: IDeclassifyRequest,
+		correlationId?: string,
+	): Promise<IDeclassifyResponse> {
+		try {
+
+			const headers: { [key: string]: string } = {
+				'Content-Type': 'application/json',
+			};
+
+			// Add correlation ID if provided
+			if (correlationId) {
+				headers['X-SECLORE-CORRELATION-ID'] = correlationId;
+			}
+
+			const options: IHttpRequestOptions = {
+				method: 'POST',
+				url: `${this.baseUrl}/seclore/drm/1.0/classification/declassify`,
+				headers,
+				body: declassifyRequest,
+				json: true,
+			};
+
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
+
+			// Some server versions return the result wrapped in an array
+			const responseBody = Array.isArray(response.body) ? response.body[0] : response.body;
+
+			const declassifyResponse: IDeclassifyResponse = {
+				...(responseBody as IDeclassifyResponse),
+				headers: response.headers as { [key: string]: string }
+			};
+
+			return declassifyResponse;
+		} catch (error: unknown) {
+			this.throwDetailedError(error as NodeApiError, 'classification/declassify');
+		}
+	}
+
+	/**
+	 * Retrieves all classification labels configured in the Policy Server.
+	 *
+	 * @param getLabelsRequest - The request details with context file storage ID
+	 * @param correlationId - Optional request ID for logging purpose
+	 * @returns Promise<IGetLabelsResponse> - All labels configured in the Policy Server
+	 * @throws Error on bad request, authentication failure or server error
+	 */
+	async getLabels(
+		getLabelsRequest: IGetLabelsRequest,
+		correlationId?: string,
+	): Promise<IGetLabelsResponse> {
+		try {
+
+			const headers: { [key: string]: string } = {};
+
+			// Add correlation ID if provided
+			if (correlationId) {
+				headers['X-SECLORE-CORRELATION-ID'] = correlationId;
+			}
+
+			const options: IHttpRequestOptions = {
+				method: 'GET',
+				url: `${this.baseUrl}/seclore/drm/1.0/classification/labels`,
+				headers,
+				qs: {
+					fileStorageId: getLabelsRequest.fileStorageId,
+					...(getLabelsRequest.forceLabelRefresh !== undefined
+						? { forceLabelRefresh: getLabelsRequest.forceLabelRefresh }
+						: {}),
+				},
+				json: true,
+			};
+
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
+
+			const labelsResponse: IGetLabelsResponse = {
+				labels: response.body,
+				headers: response.headers as { [key: string]: string }
+			};
+
+			return labelsResponse;
+		} catch (error: unknown) {
+			this.throwDetailedError(error as NodeApiError, 'classification/labels');
+		}
+	}
+
+	/**
+	 * Returns the current classification label on a specific file.
+	 *
+	 * @param fileStorageId - Storage ID of the file to inspect
+	 * @param correlationId - Optional request ID for logging purpose
+	 * @returns Promise<IGetFileClassificationResponse> - Whether the file is classified and its classification info
+	 * @throws Error on bad request, authentication failure or server error
+	 */
+	async getFileClassification(
+		fileStorageId: string,
+		correlationId?: string,
+	): Promise<IGetFileClassificationResponse> {
+		try {
+
+			const headers: { [key: string]: string } = {};
+
+			// Add correlation ID if provided
+			if (correlationId) {
+				headers['X-SECLORE-CORRELATION-ID'] = correlationId;
+			}
+
+			const options: IHttpRequestOptions = {
+				method: 'GET',
+				url: `${this.baseUrl}/seclore/drm/1.0/classification/${fileStorageId}`,
+				headers,
+				json: true,
+			};
+
+			const response = await this.context.helpers.httpRequestWithAuthentication.call(this.context, 'secloreProtectApi', { ...options, returnFullResponse: true });
+
+			// Some server versions return the result wrapped in an array
+			const responseBody = Array.isArray(response.body) ? response.body[0] : response.body;
+
+			const classificationResponse: IGetFileClassificationResponse = {
+				...(responseBody as IGetFileClassificationResponse),
+				headers: response.headers as { [key: string]: string }
+			};
+
+			return classificationResponse;
+		} catch (error: unknown) {
+			this.throwDetailedError(error as NodeApiError, 'classification/get');
 		}
 	}
 

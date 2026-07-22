@@ -3,3 +3,4 @@ package-lock.json
 .n8n
 .devcontainer
 dist
+.claude

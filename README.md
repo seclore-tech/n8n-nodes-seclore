@@ -17,7 +17,7 @@ This is an n8n community node. It lets you use Seclore DRM Server in your n8n wo
 
 Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
 
-Use `n8n-nodes-seclore` as the package name.
+Use `@seclore/n8n-nodes-seclore` as the package name.
 
 ## Operations
 
@@ -38,6 +38,48 @@ This node supports the following operations with Seclore DRM Server:
 - **Required Parameters**:
   - **Input Binary Property**: Name of the binary property containing the protected file (default: 'data')
 - **Output**: Unprotected original file content
+
+
+### DRM Classification
+#### Classify
+- **Description**: Applies a classification label (configured in the Seclore Policy Server) to a file
+- **Required Parameters**:
+  - **Label ID**: The ID of the classification label configured in the Policy Server
+  - **Input Binary Property**: Name of the binary property containing the input file (default: 'data')
+- **Optional Parameters**:
+  - **Force Label Refresh**: Refresh the server-side label cache before the operation
+- **Output**: The classified file with classification metadata embedded
+
+#### Reclassify
+- **Description**: Updates the classification label on an already-classified file
+- **Required Parameters**:
+  - **Label ID**: The new classification label ID
+  - **Input Binary Property**: Name of the binary property containing the input file (default: 'data')
+- **Optional Parameters**:
+  - **Force Label Refresh**: Refresh the server-side label cache before the operation
+- **Output**: The reclassified file, plus the current and previous label details
+
+#### Declassify
+- **Description**: Removes the classification label from a file (DRM protection, if any, is unaffected)
+- **Required Parameters**:
+  - **Input Binary Property**: Name of the binary property containing the input file (default: 'data')
+- **Optional Parameters**:
+  - **Force Label Refresh**: Refresh the server-side label cache before the operation
+- **Output**: The declassified file
+
+#### Get Classification Labels
+- **Description**: Retrieves all classification labels configured in the Policy Server
+- **Required Parameters**:
+  - **Input Binary Property**: Name of the binary property containing a context file (default: 'data')
+- **Optional Parameters**:
+  - **Force Label Refresh**: Refresh the server-side label cache before the operation
+- **Output**: The list of labels, including nested sublabels
+
+#### Get File Classification
+- **Description**: Retrieves the current classification label on a file
+- **Required Parameters**:
+  - **Input Binary Property**: Name of the binary property containing the input file (default: 'data')
+- **Output**: Whether the file is classified and its classification details
 
 
 ## Credentials
