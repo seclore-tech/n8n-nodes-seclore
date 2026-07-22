@@ -1,6 +1,6 @@
 {
 	"name": "@seclore/n8n-nodes-seclore",
-	"version": "1.0.8",
+	"version": "1.1.0",
 	"description": "n8n community node for Seclore Protect - secure file protection using DRM technology",
 	"license": "MIT",
 	"homepage": "",
