@@ -95,6 +95,17 @@ jobs:
         # (ENEEDAUTH) instead of the OIDC exchange.
         run: 'npm install -g npm@latest'
 
+      - name: Debug OIDC availability
+        # Temporary diagnostic: confirms the npm version actually in effect and
+        # whether GitHub's OIDC token request variables are present at all —
+        # both are silent prerequisites for npm to even attempt Trusted Publishing.
+        run: |
+          echo "npm version: $(npm --version)"
+          echo "node version: $(node --version)"
+          echo "GITHUB_ACTIONS: $GITHUB_ACTIONS"
+          if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then echo "ACTIONS_ID_TOKEN_REQUEST_URL: present"; else echo "ACTIONS_ID_TOKEN_REQUEST_URL: MISSING"; fi
+          if [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: present"; else echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: MISSING"; fi
+
       - name: Release
         # Publishes to npm with a provenance attestation (requires id-token: write above).
         # Lint and build run automatically as part of the release process.
