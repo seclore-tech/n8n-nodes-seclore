@@ -60,6 +60,11 @@ on:
       # Matches 0.1.0, 1.2.3, 2.0.0-rc.1, etc.
       # See "TAG CONVENTION" above if you prefer tags with a "v" prefix.
       - '*.*.*'
+  # Manual trigger — needed when the version to publish already matches an
+  # existing (possibly stale/unmovable) git tag, so a new tag push isn't
+  # possible. Runs against whatever commit/branch you pick, publishing
+  # whatever version is currently in package.json.
+  workflow_dispatch: {}
 
 jobs:
   publish:
