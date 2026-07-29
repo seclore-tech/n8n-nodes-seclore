@@ -1,5 +1,5 @@
 {
-	"node": "n8n-nodes-base.secloreProtect",
+	"node": "@seclore/n8n-nodes-seclore.secloreProtect",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Utility", "Data & Storage", "Miscellaneous"],
